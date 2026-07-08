@@ -92,8 +92,27 @@ jobs:
           no_output_timeout: 30m
           command: |
             set -x
-            R -e "Sys.setenv(MAKEJ=3); remotes::install_git(c('.'), lib=c('${R_LIBS}'))"
+            R -e "Sys.setenv(MAKEJ=3); remotes::install_git(c('.'), lib=c('${R_LIBS}'), upgrade='never', INSTALL_opts='--build')"
             R -e "library(SimpleITK); Version()"
+      - run:
+          name: Rename package
+          command: |
+            # package naming is SimpleITK_${PKG_VERSION}_R${R_VERSION_SHORT}_${OS_ARCHIVE_EXT}
+            R_VERSION_SHORT=$(echo "<< parameters.r-version >>" | cut -d'.' -f1,2)
+            PKG_VERSION=$(Rscript -e "cat(read.dcf('DESCRIPTION', 'Version')[1])")
+
+            # canonical approach to collecting build artifacts in a directory for upload
+            mkdir -p artifacts
+
+            # Find the built package and rename according to the naming convention
+            BUILT_PKG=$(ls SimpleITK_*.tgz | head -1)
+            PKG_NAME="SimpleITK_${PKG_VERSION}_R${R_VERSION_SHORT}_macos-arm64.tgz"
+            mv "$BUILT_PKG" "artifacts/$PKG_NAME"
+
+            ls -lh artifacts/
+      - store_artifacts:
+          path: artifacts
+          destination: .
 workflows:
   r-build-test:
     # Runs on: push to main, pull requests to main, manual trigger, and scheduled runs

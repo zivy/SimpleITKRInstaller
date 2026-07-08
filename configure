@@ -37,6 +37,25 @@ if [ -z "${MAKEJ}" ] ; then
     export MAKEJ
 fi
 
+## For MacOS, set CMAKE_OSX_DEPLOYMENT_TARGET based on architecture
+## Following https://mac.r-project.org/ guidelines:
+## "sonoma-arm64 build supports arm64 Macs (M1+) from macOS 14 (Sonoma) and higher (since R 4.6.0)"
+## "big-sur-x86_64 build supports legacy Intel Macs from macOS 11 (Big Sur) and higher (since R 4.3.0)"
+CMAKE_OSX_ARGS=""
+if [ "$(uname -s)" == "Darwin" ]; then
+    OS_ARCH=$(uname -m)
+    if [ "$OS_ARCH" == "arm64" ] || [ "$OS_ARCH" == "aarch64" ]; then
+        # For Apple Silicon, target macOS 14 (Sonoma)
+        export CMAKE_OSX_DEPLOYMENT_TARGET="14.0"
+    elif [ "$OS_ARCH" == "x86_64" ]; then
+        # For Intel Macs, target macOS 11 (Big Sur)
+        export CMAKE_OSX_DEPLOYMENT_TARGET="11.0"
+    fi
+    if [ -n "${CMAKE_OSX_DEPLOYMENT_TARGET}" ]; then
+        CMAKE_OSX_ARGS="-D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=${CMAKE_OSX_DEPLOYMENT_TARGET}"
+    fi
+fi
+
 ## All the building is going to happen in an SITK folder
 mkdir -p SITK
 (
@@ -56,6 +75,7 @@ mkdir -p SITK
         cmake \
         -D "CMAKE_CXX_FLAGS:STRING=-fvisibility=hidden -fvisibility-inlines-hidden ${CFLAGS}" \
         -D "CMAKE_C_FLAGS:STRING=-fvisibility=hidden ${CFLAGS}" \
+        ${CMAKE_OSX_ARGS} \
         -DITK_C_OPTIMIZATION_FLAGS:STRING="" \
         -DITK_CXX_OPTIMIZATION_FLAGS:STRING="" \
         -DWRAP_DEFAULT=OFF\
