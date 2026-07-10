@@ -27,7 +27,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        R: [ '4.4.3', '4.5.3', '4.6.0' ]
+        # Build against oldest patch versions x.y.0 as R is forward
+        # compatible.
+        R: [ '4.4.0', '4.5.0', '4.6.0' ]
         os: [ 'macos-15-intel', 'ubuntu-24.04', 'windows-latest']
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.R }} ${{ matrix.os }} build
@@ -183,7 +185,7 @@ jobs:
         draft: true
         name: SimpleITK ${{ github.ref_name }} R Package Release
         body: |
-          **Please review and test the packages before publishing this release. Then remove this line and make it public.**
+          **Please manually upload the artifacts from CircleCI, review and test the packages before publishing this release. Then remove this line and make it public.**
 
           Detailed release notes are available on the [main SimpleITK repository](https://github.com/SimpleITK/SimpleITK/releases/${{ github.ref_name }}).
 
